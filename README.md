@@ -1,9 +1,9 @@
----
+<!---
 contributors:
   - Haruki Kono
   - Kota Saito
   - Alec Sandroni
----
+--->
 
 # REPLICATION PACKAGE FOR "Axiomatization of Random Utility Model with Unobservable Alternatives"
 
@@ -96,16 +96,18 @@ It is assumed that the working directory is ./.
 First, aggregate 141 files in ./Raw Data to create ./collective_choice_data.csv.
 To do so, execute ./process_data.py, which can be done in Unix by issuing the command
 
-> python process_data.py
-
+```python
+python process_data.py
+```
 
 (b) Make the figure.
 
 Next, compute the lower and upper bounds of unobservable choice probabilities implied by the random utility model and draw the figure in Section 4 of the paper.
 To do so, execute ./make_lottery_figure.py, which can be done in Unix by issuing the command
 
-> python make_lottery_figure
-
+```python
+python make_lottery_figure
+```
 
 ## 5. Results
 
