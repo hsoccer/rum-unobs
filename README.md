@@ -1,11 +1,9 @@
 <!---
-contributors:
-  - Haruki Kono
-  - Kota Saito
-  - Alec Sandroni
+contributor:
+  Haruki Kono
 --->
 
-# REPLICATION PACKAGE FOR "Axiomatization of Random Utility Model with Unobservable Alternatives"
+# Replication Package for "Axiomatization of Random Utility Model with Unobservable Alternatives"
 
 This folder provides all the codes and data to reproduce the results Section 4 of the paper "Axiomatization of Random Utility Model with Unobservable Alternatives" by Haruki Kono, Kota Saito, and Alec Sandroni (https://arxiv.org/abs/2302.03913).
 In particular, the codes compute the lower and upper bounds of unobservable choice probabilities implied by the random utility model using the dataset provided by McCausland et al. (2020).
@@ -106,7 +104,7 @@ Next, compute the lower and upper bounds of unobservable choice probabilities im
 To do so, execute ./make_lottery_figure.py, which can be done in Unix by issuing the command
 
 ```python
-python make_lottery_figure
+python make_lottery_figure.py
 ```
 
 ## 5. Results
