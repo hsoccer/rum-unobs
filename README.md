@@ -7,7 +7,7 @@ contributors:
 
 # REPLICATION PACKAGE FOR "Axiomatization of Random Utility Model with Unobservable Alternatives"
 
-This folder provides all the codes and data to reproduce the results Section 4 of the paper "Axiomatization of Random Utility Model with Unobservable Alternatives" by Haruki Kono, Kota Saito, Alec Sandroni (https://arxiv.org/abs/2302.03913).
+This folder provides all the codes and data to reproduce the results Section 4 of the paper "Axiomatization of Random Utility Model with Unobservable Alternatives" by Haruki Kono, Kota Saito, and Alec Sandroni (https://arxiv.org/abs/2302.03913).
 In particular, the codes compute the lower and upper bounds of unobservable choice probabilities implied by the random utility model using the dataset provided by McCausland et al. (2020).
 
 ## 1. Data Availability Statement
