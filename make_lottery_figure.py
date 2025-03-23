@@ -43,7 +43,7 @@ def get_calibrated_data(rho_df):
     res = minimize(lambda x: get_resid(rho_df, x), x0, method="nelder-mead")
     list_utility = [0] + list(res.x)
     rho_fit_df = get_choice_prob(X, list(rho_df.index), list_utility)
-    return get_masked_data(rho_fit_df, X_unobs)
+    return rho_fit_df
 
 
 # 0 & 1 are not observed + cut-off
@@ -72,6 +72,7 @@ def make_figure(rho_df, X_obs, X_unobs, x_obj):
     
     # calibrated data
     rho_fit_df = get_calibrated_data(rho_missing_df)
+    rho_fit_df = get_masked_data(rho_fit_df, X_unobs)
     rho_fit_func = from_df_to_func(rho_fit_df)
 
     # compute delta for each choice set
