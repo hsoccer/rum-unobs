@@ -61,22 +61,22 @@ def get_masked_data(rho_df, X_unobs):
     for idx, D in enumerate(rho_missing_df.index):
         if rho_missing_df.iloc[idx, :].isna().sum() == 1:
             rho_missing_df.iloc[idx, :] = rho_missing_df.iloc[idx, :].fillna(1 - rho_missing_df.iloc[idx, :].sum())
+
     return rho_missing_df
 
 
 def make_figure(rho_df, X_obs, X_unobs, x_obj):
+    
+    # calibrate data
+    rho_fitted_df = get_calibrated_data(rho_df)
+    
     # not observed + cut-off
-    rho_missing_df = get_masked_data(rho_df, X_unobs)
+    rho_missing_df = get_masked_data(rho_fitted_df, X_unobs)
     rho_missing_func = from_df_to_func(rho_missing_df)
     bm_missing = BM(rho_missing_func, X)
     
-    # calibrated data
-    rho_fit_df = get_calibrated_data(rho_missing_df)
-    rho_fit_df = get_masked_data(rho_fit_df, X_unobs)
-    rho_fit_func = from_df_to_func(rho_fit_df)
-
     # compute delta for each choice set
-    net_outflow_dict = observable_net_outflow(rho_fit_func, X)
+    net_outflow_dict = observable_net_outflow(rho_missing_func, X)
 
     # all edges
     edge_list = []
@@ -109,7 +109,7 @@ def make_figure(rho_df, X_obs, X_unobs, x_obj):
 
     num_vertex, num_edge = A.shape
     
-    target_choice_sets = [D for D in rho_missing_df[rho_missing_df.isna().any(axis = 1)].index if x_obj in D]
+    target_choice_sets = [D for D in rho_missing_df[[all([x in idx for x in X_unobs])for idx in rho_missing_df.index]].index if x_obj in D]
     target_indices = [idx for idx, D in enumerate(rho_missing_df.index) if D in target_choice_sets]
     naive_upper_df = 1 - rho_missing_df.iloc[target_indices, :].loc[:, X_obs].sum(axis=1)  # upper bounds should be based on observed rather than on fitted
 
@@ -145,7 +145,7 @@ def make_figure(rho_df, X_obs, X_unobs, x_obj):
     # plot
     plt.figure(figsize=(10, 6))
 
-    plt.scatter(X_axis, rho_df.loc[id_set_df.index, x_obj], marker='*', color="black", facecolors='none', label="Actual data")
+    plt.scatter(X_axis, rho_fitted_df.loc[id_set_df.index, x_obj], marker='*', color="black", facecolors='none', label="Fitted value")
     plt.errorbar(X_axis - 0.05, rum_bdd_med_array, yerr=rum_error_array, capsize=5, fmt='o', markersize=0, ecolor='red', markeredgecolor="black", color='w', label="RUM identified set")
     eb_naive = plt.errorbar(X_axis + 0.05, naive_bdd_med_array, yerr=naive_error_array, capsize=5, fmt='o', markersize=0, ecolor='blue', markeredgecolor = "black", color='w', label="Naive identified set")
     eb_naive[-1][0].set_linestyle('dotted')
@@ -153,10 +153,10 @@ def make_figure(rho_df, X_obs, X_unobs, x_obj):
     plt.xticks(X_axis, D_list)
     plt.xlabel("Choice set", fontsize=15)
     plt.ylabel(f"Probability of choosing lottery {x_obj}", fontsize=15)
-    plt.title(f"Comparison of identified sets when {' and '.join(map(str, X_unobs))} are not obserbavle", fontsize=16)
+    # plt.title(f"Comparison of identified sets when {' and '.join(map(str, X_unobs))} are not obserbavle", fontsize=16)
     plt.legend(fontsize=12)
     # plt.show()
-    plt.savefig('id_comparison.png', dpi=1000)
+    plt.savefig(f"id_comparison_{x_obj}.png", dpi=1000)
 
 
 if __name__ == "__main__":
