@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import linprog
 from scipy.optimize import minimize
+from itertools import permutations, combinations
 
 from packages.utils import from_df_to_func, get_power_sets
 from packages.bm import BM, observable_net_outflow
@@ -46,6 +47,48 @@ def get_calibrated_data(rho_df):
     return rho_fit_df
 
 
+def from_mu_to_choice_prob(mu, prefs):
+    """
+    Args:
+        mu (np.array): probability measures over PREFS
+        prefs (list)
+    """
+    mu = np.hstack([mu, [1 - mu.sum()]])
+    X = tuple(sorted(prefs[0]))
+    rows = []
+    for i in range(2, len(X) + 1):
+        rows += list(combinations(X, i))
+    cols = X
+    rho = np.zeros((len(rows), len(cols)))
+    
+    for row, D in enumerate(rows):
+        for col, x in enumerate(X):
+            # row, D = 0, (0, 1)
+            # col, x = 0, 0
+            if x not in D:
+                rho[row, col] = np.nan
+            else:
+                rho[row, col] = np.sum((np.array([[y for y in pref if y in D][0] for pref in prefs]) == x) * mu)
+                
+    return pd.DataFrame(rho, columns=cols, index=rows) 
+
+
+def get_calibrated_data_nonparametric(rho_df):
+    X = rho_df.columns.tolist()
+    prefs = list(permutations(X))  # (0, 1, 2, 3, 4) means 0 > 1 > 2 > 3 > 4
+    num_prefs = len(prefs)
+    
+    mu0 = np.ones(num_prefs - 1) / num_prefs
+    res = minimize(
+            lambda mu: ((from_mu_to_choice_prob(mu, prefs) - rho_df)**2).sum().sum(), 
+            mu0,
+            bounds=[(0, None) for _ in range(num_prefs - 1)],
+            constraints=({'type': 'ineq', 'fun': lambda mu: 1 - mu.sum()},),
+        )
+    rho_hat_df = from_mu_to_choice_prob(res.x, prefs)
+    return rho_hat_df
+
+
 # 0 & 1 are not observed + cut-off
 def get_masked_data(rho_df, X_unobs):
     X = tuple(rho_df.columns)
@@ -65,10 +108,7 @@ def get_masked_data(rho_df, X_unobs):
     return rho_missing_df
 
 
-def make_figure(rho_df, X_obs, X_unobs, x_obj):
-    
-    # calibrate data
-    rho_fitted_df = get_calibrated_data(rho_df)
+def get_prob_bounds(rho_fitted_df, X_obs, X_unobs, x_obj):
     
     # not observed + cut-off
     rho_missing_df = get_masked_data(rho_fitted_df, X_unobs)
@@ -130,33 +170,9 @@ def make_figure(rho_df, X_obs, X_unobs, x_obj):
         id_set_list.append([D, rum_lower, rum_upper, 0, naive_upper])
 
     id_set_df = pd.DataFrame(id_set_list, columns=["D", "RUM LB", "RUM UB", "Naive LB", "Naive UB"]).set_index("D")
+    
+    return id_set_df
 
-    # visualize
-    D_list = ["{" + ", ".join(map(str, D)) + "}" for D in id_set_df.index]
-
-    X_axis = np.arange(len(D_list))
-
-    # error bar
-    rum_bdd_med_array = (id_set_df.loc[:, "RUM UB"] + id_set_df.loc[:, "RUM LB"]).values / 2
-    rum_error_array = (id_set_df.loc[:, "RUM UB"] - id_set_df.loc[:, "RUM LB"]).values / 2
-    naive_bdd_med_array = (id_set_df.loc[:, "Naive UB"] + id_set_df.loc[:, "Naive LB"]).values / 2
-    naive_error_array = (id_set_df.loc[:, "Naive UB"] - id_set_df.loc[:, "Naive LB"]).values / 2
-
-    # plot
-    plt.figure(figsize=(10, 6))
-
-    plt.scatter(X_axis, rho_fitted_df.loc[id_set_df.index, x_obj], marker='*', color="black", facecolors='none', label="Fitted value")
-    plt.errorbar(X_axis - 0.05, rum_bdd_med_array, yerr=rum_error_array, capsize=5, fmt='o', markersize=0, ecolor='red', markeredgecolor="black", color='w', label="RUM identified set")
-    eb_naive = plt.errorbar(X_axis + 0.05, naive_bdd_med_array, yerr=naive_error_array, capsize=5, fmt='o', markersize=0, ecolor='blue', markeredgecolor = "black", color='w', label="Naive identified set")
-    eb_naive[-1][0].set_linestyle('dotted')
-
-    plt.xticks(X_axis, D_list)
-    plt.xlabel("Choice set", fontsize=15)
-    plt.ylabel(f"Probability of choosing lottery {x_obj}", fontsize=15)
-    # plt.title(f"Comparison of identified sets when {' and '.join(map(str, X_unobs))} are not obserbavle", fontsize=16)
-    plt.legend(fontsize=12)
-    # plt.show()
-    plt.savefig(f"id_comparison_{x_obj}.png", dpi=1000)
 
 
 if __name__ == "__main__":
@@ -166,8 +182,51 @@ if __name__ == "__main__":
     rho_df.columns = [eval(elem) for elem in rho_df.columns]
 
     X = tuple(rho_df.columns)
-
     X_unobs = (0, 1)
     x_obj = 0
     X_obs = tuple(sorted(set(X).difference(X_unobs)))
-    make_figure(rho_df, X_obs, X_unobs, x_obj)
+    
+    # calibrate data
+    # rho_fitted_df = get_calibrated_data(rho_df)
+    rho_fitted_df = get_calibrated_data_nonparametric(rho_df)
+    
+    # get bounds
+    id_set_df_0 = get_prob_bounds(rho_fitted_df, X_obs, X_unobs, x_obj=0)
+    id_set_df_1 = get_prob_bounds(rho_fitted_df, X_obs, X_unobs, x_obj=1)
+    target_choice_sets = id_set_df_0.index
+    
+    # visualize
+    X_axis = np.arange(len(target_choice_sets))
+
+    # error bar
+    rum_bdd_mid_array_0 = (id_set_df_0.loc[:, "RUM UB"] + id_set_df_0.loc[:, "RUM LB"]).values / 2
+    rum_error_array_0 = (id_set_df_0.loc[:, "RUM UB"] - id_set_df_0.loc[:, "RUM LB"]).values / 2
+    rum_bdd_mid_array_1 = (id_set_df_1.loc[:, "RUM UB"] + id_set_df_1.loc[:, "RUM LB"]).values / 2
+    rum_error_array_1 = (id_set_df_1.loc[:, "RUM UB"] - id_set_df_1.loc[:, "RUM LB"]).values / 2
+    
+    naive_bdd_mid_array = (id_set_df_0.loc[:, "Naive UB"] + id_set_df_0.loc[:, "Naive LB"]).values / 2
+    naive_error_array = (id_set_df_0.loc[:, "Naive UB"] - id_set_df_0.loc[:, "Naive LB"]).values / 2
+
+    # plot
+    plt.figure(figsize=(10, 6))
+
+    plt.scatter(X_axis - 0.2, rho_fitted_df.loc[target_choice_sets, 0], marker='o', color="red", facecolors='none', label=r"Fitted value ($x = 0$)", s=50)
+    plt.scatter(X_axis + 0.2, rho_fitted_df.loc[target_choice_sets, 1], marker='^', color="green", facecolors='none', label=r"Fitted value ($x = 1$)", s=50)
+    
+    # plt.scatter(X_axis - 0.2, rho_df.loc[target_choice_sets, 0], marker='o', color="red", facecolors='none', label=r"True value ($x = 0$)", s=50)
+    # plt.scatter(X_axis + 0.2, rho_df.loc[target_choice_sets, 1], marker='^', color="green", facecolors='none', label=r"True value ($x = 1$)", s=50)
+    
+    eb_0 = plt.errorbar(X_axis - 0.05, rum_bdd_mid_array_0, yerr=rum_error_array_0, capsize=5, fmt='o', markersize=0, ecolor='red', markeredgecolor="black", color='w', label=r"RUM bound ($x = 0$)")
+    eb_1 = plt.errorbar(X_axis + 0.05, rum_bdd_mid_array_1, yerr=rum_error_array_1, capsize=5, fmt='o', markersize=0, ecolor='green', markeredgecolor="black", color='w', label=r"RUM bound ($x = 1$)")
+    eb_naive = plt.errorbar(X_axis, naive_bdd_mid_array, yerr=naive_error_array, capsize=5, fmt='o', markersize=0, ecolor='blue', markeredgecolor="black", color='w', label="Naive bound", alpha=0.6)
+    
+    eb_0[-1][0].set_linestyle("solid")
+    eb_1[-1][0].set_linestyle("dashed")
+    eb_naive[-1][0].set_linestyle("dotted")
+
+    plt.xticks(X_axis, ["{" + ", ".join(map(str, D)) + "}" for D in target_choice_sets])
+    plt.xlabel("Choice set", fontsize=15)
+    plt.ylabel("Choice Probability", fontsize=15)
+    plt.legend(fontsize=12)
+    # plt.show()
+    # plt.savefig("outputs/id_comparison_nonpara_fitted.png", dpi=1000)
