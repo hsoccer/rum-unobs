@@ -4,13 +4,14 @@ output:
   html_document: default
 ---
 <!---
-contributor:
+contributors:
   Haruki Kono
+  Alec Sandroni
 --->
 
-# Replication Package for "Axiomatization of Random Utility Model with Unobservable Alternatives"
+# Replication Package for "Random Utility with Unobservable Alternatives"
 
-This folder provides all the codes and data to reproduce the results Section 4 of the paper "Axiomatization of Random Utility Model with Unobservable Alternatives" by Haruki Kono, Kota Saito, and Alec Sandroni (https://arxiv.org/abs/2302.03913).
+This folder provides all the codes and data to reproduce the results Section 4 of the paper "Random Utility with Unobservable Alternatives" by Haruki Kono, Kota Saito, and Alec Sandroni.
 In particular, the codes compute the lower and upper bounds of unobservable choice probabilities implied by the random utility model using the dataset provided by McCausland et al. (2020).
 
 ## 1. Data Availability Statement
@@ -24,8 +25,8 @@ This dataset is provided in the form of .pdf (and .tex), but we translated it in
 
 - macOS Monterey 12.3.1
 - Python 3.9.7
-    - numpy 1.24.3
-    - pandas 1.3.4
+    - numpy 1.26.4
+    - pandas 1.5.3
     - matplotlib 3.7.1
     - scipy 1.7.1
     - the file ./requirements.txt lists these dependencies, please run `pip install -r requirements.txt` as the first step.
@@ -39,7 +40,7 @@ This dataset is provided in the form of .pdf (and .tex), but we translated it in
 - README: this file
 - process_data.py: a code that aggregates all files in Raw Data directory, create a single stochastic choice dataset, and save it as ./collective_choice_data.csv
 - make_lottery_figure.py: a code that makes the figure named ./id_comparison.png that appears in Section 4 of the paper
-
+- requirements.txt
 
 ### ./Raw Data
 
@@ -92,8 +93,6 @@ If a lottery is unavailable at a choice set, then the corresponding cell is left
 
 ## 4. Steps to Reproduce Results in Paper
 
-It is assumed that the working directory is ./.
-
 (a) Process the raw dara.
 
 First, aggregate 141 files in ./Raw Data to create ./collective_choice_data.csv.
@@ -114,10 +113,10 @@ python make_lottery_figure.py
 
 ## 5. Results
 
-After executing ./make_lottery_figure.py, ./id_comparison.png will be saved.
+After executing ./make_lottery_figure.py, ./outputs/id_comparison.png will be saved.
 The image should look like:
 
-![id_comparison](./id_comparison.png)
+![id_comparison](./outputs/id_comparison.png)
 
 ## 6. References
 
