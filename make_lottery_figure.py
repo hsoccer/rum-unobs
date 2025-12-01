@@ -152,11 +152,11 @@ def get_prob_bounds(rho_fitted_df, X_obs, X_unobs, x_obj):
     target_choice_sets = [D for D in rho_missing_df[[all([x in idx for x in X_unobs])for idx in rho_missing_df.index]].index if x_obj in D]
     target_indices = [idx for idx, D in enumerate(rho_missing_df.index) if D in target_choice_sets]
     naive_upper_df = 1 - rho_missing_df.iloc[target_indices, :].loc[:, X_obs].sum(axis=1)  # upper bounds should be based on observed rather than on fitted
+    L_sum = rho_missing_df.iloc[ :].loc[:, X_obs].sum(axis=1) 
 
     id_set_list = []
     for D in naive_upper_df.index:
-        naive_upper = naive_upper_df[D]
-        
+        naive_upper = naive_upper_df[D] 
         c_lower = np.zeros(num_edge)
         for E in get_power_sets(X):
             if set(D).issubset(E):
@@ -166,10 +166,26 @@ def get_prob_bounds(rho_fitted_df, X_obs, X_unobs, x_obj):
         c_upper = - c_lower
         rum_lower = linprog(c_lower, A_ub=A, b_ub=b).fun
         rum_upper = -linprog(c_upper, A_ub=A, b_ub=b).fun
-        
-        id_set_list.append([D, rum_lower, rum_upper, 0, naive_upper])
-
-    id_set_df = pd.DataFrame(id_set_list, columns=["D", "RUM LB", "RUM UB", "Naive LB", "Naive UB"]).set_index("D")
+        if x_obj == 0:
+            if D != (0,1):
+                mon_lower = L_sum[D[1:]] - L_sum[D]
+                print(mon_lower)
+                mon_upper = 1- L_sum[D[:1] + D[2:]]
+                print(mon_upper)
+            else:
+                mon_lower = 0
+                mon_upper = 1
+        if x_obj == 1:
+            if D != (0,1):
+                mon_lower = L_sum[D[:1] + D[2:]] - L_sum[D]
+                print(mon_lower)
+                mon_upper = 1- L_sum[D[1:]]
+                print(mon_upper)
+            else:
+                mon_lower = 0
+                mon_upper = 1
+        id_set_list.append([D, rum_lower, rum_upper, 0, naive_upper, mon_lower, mon_upper])
+    id_set_df = pd.DataFrame(id_set_list, columns=["D", "RUM LB", "RUM UB", "Naive LB", "Naive UB", "Mon LB", "Mon UB"]).set_index("D")
     
     return id_set_df
 
@@ -204,6 +220,11 @@ if __name__ == "__main__":
     rum_bdd_mid_array_1 = (id_set_df_1.loc[:, "RUM UB"] + id_set_df_1.loc[:, "RUM LB"]).values / 2
     rum_error_array_1 = (id_set_df_1.loc[:, "RUM UB"] - id_set_df_1.loc[:, "RUM LB"]).values / 2
     
+    mon_bdd_mid_array_1 = (id_set_df_1.loc[:, "Mon UB"] + id_set_df_1.loc[:, "Mon LB"]).values / 2
+    mon_error_array_1 = (id_set_df_1.loc[:, "Mon UB"] - id_set_df_1.loc[:, "Mon LB"]).values / 2
+    mon_bdd_mid_array_0 = (id_set_df_0.loc[:, "Mon UB"] + id_set_df_0.loc[:, "Mon LB"]).values / 2
+    mon_error_array_0 = (id_set_df_0.loc[:, "Mon UB"] - id_set_df_0.loc[:, "Mon LB"]).values / 2
+
     naive_bdd_mid_array = (id_set_df_0.loc[:, "Naive UB"] + id_set_df_0.loc[:, "Naive LB"]).values / 2
     naive_error_array = (id_set_df_0.loc[:, "Naive UB"] - id_set_df_0.loc[:, "Naive LB"]).values / 2
 
@@ -216,11 +237,15 @@ if __name__ == "__main__":
     # plt.scatter(X_axis - 0.2, rho_df.loc[target_choice_sets, 0], marker='o', color="red", facecolors='none', label=r"True value ($x = 0$)", s=50)
     # plt.scatter(X_axis + 0.2, rho_df.loc[target_choice_sets, 1], marker='^', color="green", facecolors='none', label=r"True value ($x = 1$)", s=50)
     
-    eb_0 = plt.errorbar(X_axis - 0.05, rum_bdd_mid_array_0, yerr=rum_error_array_0, capsize=5, fmt='o', markersize=0, ecolor='red', markeredgecolor="black", color='w', label=r"RUM bound ($x = 0$)")
-    eb_1 = plt.errorbar(X_axis + 0.05, rum_bdd_mid_array_1, yerr=rum_error_array_1, capsize=5, fmt='o', markersize=0, ecolor='green', markeredgecolor="black", color='w', label=r"RUM bound ($x = 1$)")
+    eb_0 = plt.errorbar(X_axis - 0.30, rum_bdd_mid_array_0, yerr=rum_error_array_0, capsize=5, fmt='o', markersize=0, ecolor='red', markeredgecolor="black", color='w', label=r"RUM bound ($x = 0$)")
+    eb_1 = plt.errorbar(X_axis + 0.30, rum_bdd_mid_array_1, yerr=rum_error_array_1, capsize=5, fmt='o', markersize=0, ecolor='green', markeredgecolor="black", color='w', label=r"RUM bound ($x = 1$)")
     eb_naive = plt.errorbar(X_axis, naive_bdd_mid_array, yerr=naive_error_array, capsize=5, fmt='o', markersize=0, ecolor='blue', markeredgecolor="black", color='w', label="Naive bound", alpha=0.6)
+    eb_mon =  plt.errorbar(X_axis - 0.15, mon_bdd_mid_array_0, yerr=mon_error_array_0, capsize=5, fmt='o', markersize=0, ecolor='purple', markeredgecolor="black", color='w', label=r"Monotonicity bound ($x = 0$)")
+    eb_mon1 =  plt.errorbar(X_axis + 0.15, mon_bdd_mid_array_1, yerr=mon_error_array_1, capsize=5, fmt='o', markersize=0, ecolor='orange', markeredgecolor="black", color='w', label=r"Monotonicty bound ($x = 1$)")
     
     eb_0[-1][0].set_linestyle("solid")
+    eb_mon[-1][0].set_linestyle("dashdot")
+    eb_mon1[-1][0].set_linestyle("dotted")
     eb_1[-1][0].set_linestyle("dashed")
     eb_naive[-1][0].set_linestyle("dotted")
 
@@ -228,5 +253,5 @@ if __name__ == "__main__":
     plt.xlabel("Choice set", fontsize=15)
     plt.ylabel("Choice Probability", fontsize=15)
     plt.legend(fontsize=12)
+    plt.savefig("outputs/id_comparison.png", dpi=1000)
     # plt.show()
-    # plt.savefig("outputs/id_comparison_nonpara_fitted.png", dpi=1000)
