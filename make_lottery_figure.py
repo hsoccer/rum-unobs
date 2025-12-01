@@ -169,18 +169,14 @@ def get_prob_bounds(rho_fitted_df, X_obs, X_unobs, x_obj):
         if x_obj == 0:
             if D != (0,1):
                 mon_lower = L_sum[D[1:]] - L_sum[D]
-                print(mon_lower)
                 mon_upper = 1- L_sum[D[:1] + D[2:]]
-                print(mon_upper)
             else:
                 mon_lower = 0
                 mon_upper = 1
         if x_obj == 1:
             if D != (0,1):
                 mon_lower = L_sum[D[:1] + D[2:]] - L_sum[D]
-                print(mon_lower)
                 mon_upper = 1- L_sum[D[1:]]
-                print(mon_upper)
             else:
                 mon_lower = 0
                 mon_upper = 1
