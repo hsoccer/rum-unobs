@@ -33,6 +33,7 @@ This dataset is provided in the form of .pdf (and .tex), but we translated it in
 ### . (Top directory)
 
 - README: this file
+- from_tex_to_csv.py: a code that converts McCausland et al’s tex file to csv files
 - process_data.py: a code that aggregates all files in Raw Data directory, create a single stochastic choice dataset, and save it as ./collective_choice_data.csv
 - make_lottery_figure.py: a code that makes the figure named ./id_comparison.png that appears in Section 4 of the paper
 - requirements.txt
