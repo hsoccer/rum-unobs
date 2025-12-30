@@ -1,6 +1,7 @@
 # ignore Raw Data
 Raw Data/*
 !Raw Data/.gitkeep 
+RCM_multi_data.tex
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
