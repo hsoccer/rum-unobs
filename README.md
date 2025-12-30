@@ -6,14 +6,13 @@ contributors:
 
 # Replication Package for "Random Utility with Unobservable Alternatives"
 
-This folder provides all the codes and data to reproduce the results Section 4 of the paper "Random Utility with Unobservable Alternatives" by Haruki Kono, Kota Saito, and Alec Sandroni.
-In particular, the codes compute the lower and upper bounds of unobservable choice probabilities implied by the random utility model using the dataset provided by McCausland et al. (2020).
+This folder contains all code and data required to reproduce the results in Section V of “Random Utility with Unobservable Alternatives” by Haruki Kono, Kota Saito, and Alec Sandroni. In particular, the code computes the lower and upper bounds on unobservable choice probabilities implied by the random utility model using the dataset provided by McCausland et al. (2020). We also include code to generate the aggregated dataset from the McCausland et al. (2020) data.
 
 ## 1. Data Availability Statement
 
 The analysis executed in this folder is based on the dataset obtained in an experimental study by McCausland et al. (2020).
-This is available at ./Data_Tables/data_tables.pdf in their supplementary material (https://doi.org/10.1093/ej/uez039).
-This dataset is provided in the form of .pdf (and .tex), but we translated it into .csv files in ./Raw Data directory.
+This is available at ./Data_Tables/RCM_multi_data.tex in their supplementary material (https://doi.org/10.1093/ej/uez039).
+This dataset is provided in the form of .tex. 
 
 
 ## 2. Computational Requirements
@@ -33,53 +32,9 @@ This dataset is provided in the form of .pdf (and .tex), but we translated it in
 ### . (Top directory)
 
 - README: this file
-- from_tex_to_csv.py: a code that converts McCausland et al’s tex file to csv files
-- process_data.py: a code that aggregates all files in Raw Data directory, create a single stochastic choice dataset, and save it as ./collective_choice_data.csv
-- make_lottery_figure.py: a code that makes the figure named ./id_comparison.png that appears in Section 4 of the paper
+- collective_choice_data.csv: a csv containing the choice frequencies calculated from the raw McCausland et al. (2020) dataset.
+- make_lottery_figure.py: a code that makes the figure named ./id_comparison.png that appears in Section V of the paper.
 - requirements.txt
-
-### ./Raw Data
-
-This directory contains the results of the experimental study by McCausland et al. (2020).
-In the experiment, the authors prepared five different lotteries and asked 141 subjects to choose a lottery from each subset of the five.
-They repeated this six times for each individual.
-
-This directory contains 141 files and each of them has each participant's results.
-The numbers in the column (0 - 4) represent the five lotteries. 
-The numbers in the row (0 - 25) represent all possible choice sets in the following correspondance:
-
-| Index |     Choice set     |
-|:-----:|:------------------:|
-|    0  |        (0, 1)      |
-|    1  |        (0, 2)      |
-|    2  |        (1, 2)      |
-|    3  |      (0, 1, 2)     |
-|    4  |        (0, 3)      |
-|    5  |        (1, 3)      |
-|    6  |      (0, 1, 3)     |
-|    7  |        (2, 3)      |
-|    8  |      (0, 2, 3)     |
-|    9  |      (1, 2, 3)     |
-|   10  |     (0, 1, 2, 3)   |
-|   11  |        (0, 4)      |
-|   12  |        (1, 4)      |
-|   13  |      (0, 1, 4)     |
-|   14  |        (2, 4)      |
-|   15  |      (0, 2, 4)     |
-|   16  |      (1, 2, 4)     |
-|   17  |     (0, 1, 2, 4)   |
-|   18  |        (3, 4)      |
-|   19  |      (0, 3, 4)     |
-|   20  |      (1, 3, 4)     |
-|   21  |     (0, 1, 3, 4)   |
-|   22  |      (2, 3, 4)     |
-|   23  |     (0, 2, 3, 4)   |
-|   24  |     (1, 2, 3, 4)   |
-|   25  |   (0, 1, 2, 3, 4)  |
-
-The cells in the table represent the frequencies of choice.
-If a lottery is unavailable at a choice set, then the corresponding cell is left blank.
-
 
 ### ./packages
 
@@ -89,23 +44,34 @@ If a lottery is unavailable at a choice set, then the corresponding cell is left
 
 ## 4. Steps to Reproduce Results in Paper
 
-(a) Process the raw dara.
+## 4.1 Steps to reproduce the figure
 
-First, aggregate 141 files in ./Raw Data to create ./collective_choice_data.csv.
-To do so, execute ./process_data.py, which can be done in Unix by issuing the command
+To create the figure from Section V of the paper, execute ./make_lottery_figure.py, which can be done in Unix by issuing the command
+
+```python
+python make_lottery_figure.py
+```
+This script (i) constructs the calibrated dataset from the choice frequencies in collective_choice_data.csv, (ii) computes the implied lower and upper bounds on unobservable choice probabilities under the random utility model, and (iii) generates the figure reported in Section V of the paper.
+
+Section 4.2 describes how to generate the aggregated dataset collective_choice_data.csv. Reproducing collective_choice_data.csv is not required to reproduce the figure, because the aggregated dataset is included in this replication package, courtesy of the authors of McCausland et al. (2020).
+
+## 4.2 Steps to reproduce aggregated dataset (collective_choice_data.csv)
+
+To reproduce the aggregated dataset, first get RCM_multi_data.tex. This is available at ./Data_Tables/RCM_multi_data.tex in the supplementary material of McCausland et al. (2020) (https://doi.org/10.1093/ej/uez039). Make sure that RCM_multi_data.tex is in the folder contaning the code.
+
+Then execute ./from_tex_to_csv.py, which can be done in Unix by issuing the command
+
+```python
+python from_tex_to_csv.py
+```
+
+This writes the processed individual data to the Raw Data folder. Next, execute ./process_data.py by issuing the command
 
 ```python
 python process_data.py
 ```
 
-(b) Make the figure.
-
-Next, compute the lower and upper bounds of unobservable choice probabilities implied by the random utility model and draw the figure in Section 4 of the paper.
-To do so, execute ./make_lottery_figure.py, which can be done in Unix by issuing the command
-
-```python
-python make_lottery_figure.py
-```
+This creates the collective_choice_data.csv file, which contains the aggregated choice frequencies for each choice sets.
 
 ## 5. Results
 

@@ -3,8 +3,8 @@ import pandas as pd
 
 
 if __name__ == "__main__":
-    McCausland_path = "/Users/harukikono/Downloads/uez039_replication_package"  # Local path to McCausland et al’s replication package
-    text = open(McCausland_path + "/Data_Tables/RCM_multi_data.tex").read()
+    # Make sure that RCM_multi_data.tex is in ./
+    text = open("RCM_multi_data.tex").read()
     Raw_Data_path = "Raw Data"
 
     for idx_sub in range(1, 142):

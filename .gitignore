@@ -1,3 +1,7 @@
+# ignore Raw Data
+Raw Data/*
+!Raw Data/.gitkeep 
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
